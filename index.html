@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EDEFEA">
+<title>Finances</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+  <header id="topbar">
+    <h1 id="screen-title">Today</h1>
+    <button id="sync-chip" class="chip" type="button" aria-live="polite">Local</button>
+  </header>
+
+  <main id="screen" tabindex="-1"></main>
+
+  <nav id="tabbar" aria-label="Sections">
+    <button data-tab="today"    class="tab" type="button"><span class="glyph">◔</span>Today</button>
+    <button data-tab="allocate" class="tab" type="button"><span class="glyph">▤</span>Money in</button>
+    <button data-tab="bills"    class="tab" type="button"><span class="glyph">☰</span>Bills</button>
+    <button data-tab="cards"    class="tab" type="button"><span class="glyph">▧</span>Cards</button>
+    <button data-tab="survive"  class="tab" type="button"><span class="glyph">✓</span>Survive</button>
+    <button data-tab="ask"      class="tab" type="button"><span class="glyph">✳</span>Ask</button>
+  </nav>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="seed.js"></script>
+<script src="store.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
