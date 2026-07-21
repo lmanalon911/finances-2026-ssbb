@@ -10,7 +10,7 @@ create table if not exists changelog   (id text primary key, data jsonb not null
 create table if not exists settings    (id text primary key, data jsonb not null, updated_at timestamptz default now());
 
 -- Row level security on, with a policy that lets the anon key read and write.
--- The anon key is never committed to the repository — it is pasted into each
+-- The anon key is never committed to the repository, it is pasted into each
 -- phone once, in Settings, and stored only in that phone's browser.
 do $$
 declare t text;

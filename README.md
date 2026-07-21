@@ -49,21 +49,46 @@ It then opens like an app and works with no signal.
 
 ## Sync between the two phones
 
-Without this, each phone keeps its own copy. With it, both see the same numbers.
+Without this, each phone keeps its own copy in its own browser. With it, both see the same numbers and changes appear on the other phone within seconds.
 
-1. Create a free project at [supabase.com](https://supabase.com).
-2. In your project: **SQL Editor** → **New query** → paste all of `schema.sql` → **Run**.
-3. Go to **Project Settings** → **API** and copy two things:
-   - **Project URL** (looks like `https://abcdefgh.supabase.co`)
-   - **anon public** key (a long string starting `eyJ`)
-4. In the app, tap the chip in the top right → paste both → **Save and sync**.
-5. Do the same on the second phone, with the same two values.
+### On a computer, once
 
-The chip reads **Synced** when it's working, **Offline** if it can't reach Supabase — in which case everything still works and syncs when you're back.
+1. Go to [supabase.com](https://supabase.com) and sign up. Free tier is plenty.
+2. **New project**. Give it any name. Pick a region near you, Singapore is closest to the Philippines. Set a database password and save it somewhere, though you will not need it for this.
+3. Wait about two minutes for the project to finish setting up.
+4. In the left sidebar click **SQL Editor**, then **New query**.
+5. Open `schema.sql` from this folder, copy all of it, paste it in, and click **Run**. You should see "Success. No rows returned."
+6. In the left sidebar click **Project Settings**, then **API**. Copy two things:
+   - **Project URL**, looks like `https://abcdefgh.supabase.co`
+   - **anon public** key, a very long string starting with `eyJ`
 
-**On safety:** the URL and key are stored only in each phone's browser and are never committed to this repository. That's why the repository can be public. Anyone who obtained both values could read the data, so don't paste them into a message or screenshot them.
+### On the first phone
 
----
+7. Open the app, tap the chip in the top right corner, paste both values, tap **Save and sync**.
+8. The chip should change to **Synced**. Your data is now online.
+
+### On the second phone
+
+Either paste the same two values again, or use the shortcut:
+
+9. On the first phone, in Settings, tap **Copy setup link for the other phone**.
+10. Send that link to the second phone and open it once. The settings fill in automatically and it syncs.
+11. Delete the message afterwards. The link contains your key.
+
+### Reading the chip
+
+| Chip | Meaning |
+|---|---|
+| **Local only** | No Supabase settings entered yet |
+| **Syncing** | Talking to Supabase |
+| **Synced** | Everything is up to date |
+| **Offline** | Cannot reach Supabase. You can keep working; it sends the changes when the connection returns. |
+
+If a phone has been offline and made changes, it pushes those up before pulling anything down, so offline edits are never quietly overwritten. Settings shows a warning with a **Try again now** button when something is still waiting to be sent.
+
+### On safety
+
+The URL and key are stored only in each phone's browser and are never committed to this repository. That is why the repository can be public. Anyone who obtained both values could read and change the data, so do not screenshot them or leave the setup link sitting in a chat.
 
 ## The six screens
 
@@ -100,11 +125,43 @@ Two things happen before any of that:
 
 Part payments are remembered. Pay half a bill today and only the remainder appears next time.
 
+## Bills that do not repeat every month
+
+Each bill has a **Repeats** button with three options:
+
+| Setting | Use it for |
+|---|---|
+| Every month | Rent, electricity, insurance, card minimums. The default. |
+| One time | A one-off you pay and never see again. You can give it a specific date rather than a day of the month. |
+| A set number of payments | Loans with an end. The CIMB loan is 23 payments, the GLoans are 12 and 18. |
+
+Once a one-off is paid, or a counted bill reaches its last payment, it stops appearing and is marked **finished** in Bills.
+
+## Recording what you actually paid
+
+Tap **Pay** on any bill. It shows what is still owing, with the amount prefilled, and you change it to whatever you really handed over. Pay less than the full amount and the remainder carries to next time, shown as **part paid**. Tap **Undo payment** to reverse it, card balance included.
+
+Card payments are recorded the same way through **Money in**, so you never have to enter anything twice.
+
+## Editing
+
+**Edit** on a bill opens every field: name, amount, priority, how it repeats, the day or date it is due, which card it belongs to, a note, and Delete.
+
+The Bills tab also holds **Money coming in**, where you can change who pays you, how much, and on what schedule, or stop counting a source without deleting it. Below that is **Payments recorded**, and below that the change log.
+
+Cards can be renamed, have their rate and due day changed, or be deleted. Tasks on the Survive tab can be edited and deleted.
+
+## Marking a card payment
+
+Marking a card minimum as paid, in Bills or through Money in, updates that card's balance straight away: it adds the month's interest, then subtracts what you paid. You do not need to edit the balance by hand. Unmarking it puts the balance back.
+
+Manual balance editing is still there on the Cards tab, for when a statement disagrees with the app.
+
 ---
 
 ## Changing things
 
-Due dates and amounts move. Edit them in **Bills** — every change is written to the log at the bottom of that screen, so you can always see which numbers changed and when. That was the single biggest failure of the spreadsheet this replaces.
+Due dates and amounts move. Edit them in **Bills**, every change is written to the log at the bottom of that screen, so you can always see which numbers changed and when. That was the single biggest failure of the spreadsheet this replaces.
 
 ---
 
@@ -120,6 +177,7 @@ Due dates and amounts move. Edit them in **Bills** — every change is written t
 | `seed.js` | Starting data, written once on first run |
 | `sw.js` | Offline caching |
 | `schema.sql` | Supabase tables |
+| `HANDOFF.md` | Full technical handoff, read this before changing any code |
 
 `seed.js` is only read the first time the app opens. After that your data lives in the browser and in Supabase, and you can empty the arrays in that file if you'd rather it not sit in a public repository.
 

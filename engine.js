@@ -94,17 +94,41 @@ const E = (() => {
 
   /* Unpaid dated obligation instances between `from` and `until`.
      `includeOverdue` backfills anything from the current month whose day has
-     already passed — only ever true for a window that starts today, or a
+     already passed, only ever true for a window that starts today, or a
      future window would resurrect the same arrears again.
      At most one instance per obligation: the earliest unpaid one. */
+  /* Has this obligation run out of payments? Monthly ones never do. */
+  function exhausted(ob){
+    const done = ob.paidCount || 0;
+    if(ob.recur === 'once')  return done >= 1;
+    if(ob.recur === 'count') return done >= (ob.count || 0);
+    return false;
+  }
+
   function dueInstances(db, from, until, includeOverdue){
     const seen = new Set();
     const out = [];
     const wantOverdue = includeOverdue !== false;
 
     for(const ob of db.obligations || []){
-      if(ob.dueDay == null) continue;
       if(!isActive(ob, from)) continue;
+      if(exhausted(ob)) continue;
+
+      /* One-off with a specific calendar date. */
+      if(ob.dueDate){
+        if(paidFor(ob, ob.dueDate)) continue;
+        const owe = owing(ob, ob.dueDate);
+        if(owe <= 0.005) continue;
+        const past = daysBetween(ob.dueDate, from) > 0;
+        if(past && wantOverdue){
+          out.push({ob, date:ob.dueDate, amount:owe, overdue:true, part:ob.amount-owe});
+        } else if(!past && daysBetween(ob.dueDate, until) >= 0 && daysBetween(from, ob.dueDate) >= 0){
+          out.push({ob, date:ob.dueDate, amount:owe, overdue:false, part:ob.amount-owe});
+        }
+        continue;
+      }
+
+      if(ob.dueDay == null) continue;
 
       if(wantOverdue){
         const thisMonthDue = nextOnDay(period(from) + '-01', ob.dueDay);
@@ -137,13 +161,13 @@ const E = (() => {
   }
 
   const TIER_LABEL = {
-    1:'Housing loan — foreclosure risk',
-    2:'Vehicle — repossession risk',
-    3:'Utilities — disconnection',
+    1:'Housing loan, foreclosure risk',
+    2:'Vehicle, repossession risk',
+    3:'Utilities, disconnection',
     4:'Rent',
-    5:'Fixed loans — late fees, credit record',
-    6:'Card minimum — late fee plus a month of interest',
-    7:'Insurance — usually a 30-day grace period',
+    5:'Fixed loans, late fees and credit record',
+    6:'Card minimum, late fee plus a month of interest',
+    7:'Insurance, usually a 30-day grace period',
     8:'Living'
   };
 
@@ -267,7 +291,7 @@ const E = (() => {
 
   return {
     iso, today, parse, addDays, daysBetween, period, fmtDate, nextOnDay,
-    projectIncome, nextIncomes, dueInstances, paidFor, owing, plan, peso,
+    projectIncome, nextIncomes, dueInstances, paidFor, owing, exhausted, plan, peso,
     monthsToClear, addMonths, TIER_LABEL, sortForPayment, isActive
   };
 })();

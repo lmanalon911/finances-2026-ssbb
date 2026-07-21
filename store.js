@@ -1,15 +1,17 @@
 /* Storage. localStorage is always the source of truth so the app works
    offline. If Supabase credentials are set, every write is mirrored up and
-   a pull happens on load. Last write wins — fine for two people. */
+   a pull happens on load. Last write wins, fine for two people. */
 
 const Store = (() => {
   const KEY = 'fin2026';
   const CFG = 'fin2026.supabase';
+  const DIRTY = 'fin2026.dirty';
   const TABLES = ['obligations','cards','income','payments','todos','changelog','settings'];
 
   let db = null;
   let cfg = null;
   let status = 'local';
+  let dirty = false;      // local has edits that never reached Supabase
   const listeners = [];
 
   function blank(){
@@ -88,6 +90,7 @@ const Store = (() => {
   return {
     async init(){
       cfg = readCfg();
+      dirty = localStorage.getItem(DIRTY) === '1';
       db = readLocal();
       const fresh = !db;
       if(fresh){
@@ -104,8 +107,16 @@ const Store = (() => {
       if(cfg){
         setStatus('syncing');
         try{
-          const got = await pullAll();
-          if(!got) await pushAll();
+          if(dirty || fresh){
+            /* This phone has edits that never made it up. Push first, so a
+               pull can never quietly overwrite them. */
+            await pushAll();
+            dirty = false;
+            localStorage.removeItem(DIRTY);
+          } else {
+            const got = await pullAll();
+            if(!got) await pushAll();
+          }
           setStatus('synced');
         }catch(e){
           console.warn('Supabase unavailable, staying local', e);
@@ -147,11 +158,26 @@ const Store = (() => {
       try{
         for(const t of (tables || TABLES)) await pushTable(t);
         await pushTable('changelog');
+        dirty = false; localStorage.removeItem(DIRTY);
         setStatus('synced');
       }catch(e){
         console.warn('Sync failed, saved locally', e);
+        dirty = true;
+        try{ localStorage.setItem(DIRTY, '1'); }catch(_){}
         setStatus('offline');
       }
+    },
+
+    isDirty(){ return dirty; },
+
+    async retry(){
+      if(!cfg) return false;
+      setStatus('syncing');
+      try{
+        await pushAll();
+        dirty = false; localStorage.removeItem(DIRTY);
+        setStatus('synced'); return true;
+      }catch(e){ setStatus('offline'); return false; }
     },
 
     async pull(){
